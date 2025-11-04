@@ -20,6 +20,7 @@ from .models import (
     Category,
     Exchange,
     Message,
+    DeletedUser,
 )
 from .forms import UserProfileForm
 
@@ -33,7 +34,13 @@ def signup_view(request):
         password = request.POST.get("password", "")
         confirm = request.POST.get("confirm", "")
 
-        # Validation
+        if DeletedUser.objects.filter(email=email).exists():
+            messages.error(
+                request,
+                "This email has been used by a deleted account and cannot be registered again.",
+            )
+            return redirect("signup")
+
         if not name or not email or not password:
             messages.error(request, "All fields are required!")
             return redirect("signup")
@@ -46,7 +53,6 @@ def signup_view(request):
             messages.error(request, "Password must be at least 6 characters long!")
             return redirect("signup")
 
-        # Validate email format
         try:
             validate_email(email)
         except ValidationError:
@@ -102,38 +108,39 @@ def index_view(request):
 
 @login_required
 def marketplace_view(request):
-    # Get all categories for sidebar
     categories = Category.objects.all()
-
-    # Define level choices
     levels = ["Any", "Beginner", "Intermediate", "Advanced", "Expert"]
 
-    # Read selected filters from query (?category=1&level=Beginner)
+    no_unseen_messages = Message.objects.filter(
+        receiver=request.user, is_read=False
+    ).count()
+    no_pending_exchanges = Exchange.objects.filter(
+        user2=request.user, status="pending"
+    ).count()
+
     category_id = request.GET.get("category")
     level = request.GET.get("level")
 
-    # Start with all offered skills (exclude current user) with optimized queries
     offered_skills = (
         UserSkill.objects.filter(role="offer")
         .exclude(user=request.user)
         .select_related("user", "user__userprofile", "skill", "skill__category")
     )
 
-    # Apply category filter if not empty or "All"
     if category_id and category_id.lower() != "all":
         offered_skills = offered_skills.filter(skill__category_id=category_id)
 
-    # Apply skill level filter if not empty or "Any"
     if level and level.lower() != "any":
         offered_skills = offered_skills.filter(proficiency__iexact=level)
 
-    # Prepare context
     context = {
         "categories": categories,
         "skills": offered_skills,
         "levels": levels,
         "selected_category": category_id or "all",
         "selected_level": level or "any",
+        "unseen_messages": no_unseen_messages,
+        "pending_exchanges": no_pending_exchanges,
     }
 
     return render(request, "marketplace.html", context)
@@ -146,19 +153,27 @@ def admin_dashboard(request):
     pending_exchanges = Exchange.objects.filter(status="pending").count()
     completed_exchanges = Exchange.objects.filter(status="completed").count()
     recent_users = User.objects.order_by("-date_joined")[:5]
+    pending_admin_count = Exchange.objects.filter(
+        user1_completed=True, user2_completed=True, admin_approved=False, status="active"
+    ).count()
 
     context = {
         "total_users": total_users,
         "active_exchanges": active_exchanges,
-        "pending_issues": pending_exchanges,
+        "pending_exchanges": pending_exchanges,
         "completed_exchanges": completed_exchanges,
         "recent_users": recent_users,
+        "pending_admin_count": pending_admin_count,
     }
     return render(request, "admin_dashboard.html", context)
 
 
 @staff_member_required
 def admin_users(request):
+    pending_admin_count = Exchange.objects.filter(
+        user1_completed=True, user2_completed=True, admin_approved=False, status="active"
+    ).count()
+
     query = request.GET.get("q", "")
     if query:
         users = User.objects.filter(
@@ -168,13 +183,19 @@ def admin_users(request):
         ).order_by("-date_joined")
     else:
         users = User.objects.all().order_by("-date_joined")
-    return render(request, "admin_users.html", {"users": users})
+    return render(
+        request,
+        "admin_users.html",
+        {"users": users, "pending_admin_count": pending_admin_count},
+    )
 
 
 @staff_member_required
 def admin_exchanges(request):
     status_filter = request.GET.get("status", "all")
-
+    pending_admin_count = Exchange.objects.filter(
+        user1_completed=True, user2_completed=True, admin_approved=False
+    ).count()
     exchanges = Exchange.objects.all().select_related(
         "user1", "user2", "user1__userprofile", "user2__userprofile", "skill1", "skill2"
     )
@@ -187,6 +208,7 @@ def admin_exchanges(request):
     context = {
         "exchanges": exchanges,
         "status_filter": status_filter,
+        "pending_exchanges": pending_admin_count,
     }
     return render(request, "admin_exchanges.html", context)
 
@@ -194,28 +216,107 @@ def admin_exchanges(request):
 @staff_member_required
 @require_POST
 def admin_approve_exchange(request, exchange_id):
-    """Admin approves a completed exchange (POST only with CSRF)."""
     exchange = get_object_or_404(Exchange, id=exchange_id)
-    
+    action = request.POST.get("action")
+
+    # --- Handle CANCEL ---
+    if action == "return":
+        if exchange.status == "completed":
+            messages.warning(
+                request,
+                "This exchange has already been completed and cannot be cancelled.",
+            )
+        elif exchange.status == "cancelled":
+            messages.info(request, "This exchange is already cancelled.")
+        else:
+            exchange.status = "active"
+            exchange.admin_approved = False
+            exchange.admin_approved_date = None
+            exchange.user1_completed = False
+            exchange.user2_completed = False
+            exchange.user1_completed_date = None
+            exchange.user2_completed_date = None
+            exchange.save()
+
+            # Notify both users
+            admin_user = request.user
+            msg_user1 = f"Your exchange with {exchange.user2.username} for {exchange.skill1} ↔ {exchange.skill2} has been cancelled by the admin."
+            msg_user2 = f"Your exchange with {exchange.user1.username} for {exchange.skill1} ↔ {exchange.skill2} has been cancelled by the admin."
+
+            Message.objects.create(
+                sender=admin_user, receiver=exchange.user1, content=msg_user1
+            )
+            Message.objects.create(
+                sender=admin_user, receiver=exchange.user2, content=msg_user2
+            )
+
+            messages.error(
+                request,
+                f"Exchange between {exchange.user1.username} and {exchange.user2.username} has been cancelled by admin and reset.",
+            )
+        return redirect("admin_exchanges")
+
+    if action == "cancel":
+        if exchange.status == "completed":
+            messages.warning(
+                request,
+                "This exchange has already been completed and cannot be cancelled.",
+            )
+        elif exchange.status == "cancelled":
+            messages.info(request, "This exchange is already cancelled.")
+        else:
+            exchange.status = "cancelled"
+            exchange.save()
+
+            # Notify both users
+            admin_user = request.user
+            msg_user1 = f"Your exchange with {exchange.user2.username} for {exchange.skill1} ↔ {exchange.skill2} has been cancelled by the admin."
+            msg_user2 = f"Your exchange with {exchange.user1.username} for {exchange.skill1} ↔ {exchange.skill2} has been cancelled by the admin."
+
+            Message.objects.create(
+                sender=admin_user, receiver=exchange.user1, content=msg_user1
+            )
+            Message.objects.create(
+                sender=admin_user, receiver=exchange.user2, content=msg_user2
+            )
+
+            messages.error(
+                request,
+                f"Exchange between {exchange.user1.username} and {exchange.user2.username} has been cancelled by admin.",
+            )
+        return redirect("admin_exchanges")
+
+    # --- Handle APPROVE ---
     if not exchange.both_users_completed():
         messages.error(
-            request,
-            "Cannot approve: Both users must complete their parts first."
+            request, "Cannot approve: Both users must complete their parts first."
         )
         return redirect("admin_exchanges")
-    
+
     if exchange.admin_approved:
         messages.info(request, "This exchange has already been approved.")
         return redirect("admin_exchanges")
-    
+
     exchange.admin_approved = True
     exchange.admin_approved_date = timezone.now()
     exchange.status = "completed"
     exchange.save()
-    
+
+    # Optional: notify users of approval
+    admin_user = request.user
+    msg_user1 = f"Your exchange with {exchange.user2.username} for {exchange.skill1} ↔ {exchange.skill2} has been approved and marked as completed by admin."
+    msg_user2 = f"Your exchange with {exchange.user1.username} for {exchange.skill1} ↔ {exchange.skill2} has been approved and marked as completed by admin."
+
+    Message.objects.create(
+        sender=admin_user, receiver=exchange.user1, content=msg_user1
+    )
+    Message.objects.create(
+        sender=admin_user, receiver=exchange.user2, content=msg_user2
+    )
+
     messages.success(
         request,
-        f"Exchange between {exchange.user1.username} and {exchange.user2.username} has been approved and marked as completed!"
+        f"Exchange between {exchange.user1.username} and {exchange.user2.username} has been approved and marked as completed!",
     )
     return redirect("admin_exchanges")
 
@@ -223,15 +324,15 @@ def admin_approve_exchange(request, exchange_id):
 @staff_member_required
 @require_POST
 def admin_delete_user(request, user_id):
-    """Delete a user (POST only for CSRF protection)"""
     user_to_delete = get_object_or_404(User, id=user_id)
 
-    # Prevent deleting yourself
     if user_to_delete == request.user:
         messages.error(request, "You cannot delete your own account!")
         return redirect("admin_users")
 
     username = user_to_delete.username
+    DeletedUser.objects.create(email=user_to_delete.email)
+
     user_to_delete.delete()
     messages.success(request, f"User '{username}' has been deleted successfully.")
     return redirect("admin_users")
@@ -261,18 +362,14 @@ def admin_toggle_staff(request, user_id):
 def profile_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
-    # Redirect to profile creation page if profile not found
     try:
         profile = UserProfile.objects.select_related("user").get(user=user)
     except UserProfile.DoesNotExist:
-        # If current logged-in user is viewing their own profile
         if request.user == user:
             return redirect("create_profile")
         else:
-            # Show 404 if trying to view someone else's missing profile
             return render(request, "profile_not_found.html", {"profile_user": user})
 
-    # Fetch offered and wanted skills
     offered_skills = UserSkill.objects.filter(user=user, role="offer").select_related(
         "skill"
     )
@@ -290,35 +387,51 @@ def profile_view(request, user_id):
     return render(request, "profile.html", context)
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import UserProfile
+from .forms import UserProfileForm
+
 @login_required
 def create_profile(request):
-    if hasattr(request.user, "userprofile"):
-        messages.info(request, "You already have a profile.")
-        return redirect("profile", user_id=request.user.id)
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        form = UserProfileForm(request.POST, request.FILES)
+        form = UserProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
-            profile = form.save(commit=False)
-            profile.user = request.user
-            profile.save()
-            messages.success(request, "Profile created successfully!")
+            form.save()
+            if created:
+                messages.success(request, "Profile created successfully!")
+            else:
+                messages.success(request, "Profile updated successfully!")
             return redirect("profile", user_id=request.user.id)
     else:
-        form = UserProfileForm()
+        form = UserProfileForm(instance=profile)
 
-    return render(request, "create_profile.html", {"form": form})
+    context = {
+        "form": form,
+        "is_edit": not created,
+    }
+    return render(request, "create_profile.html", context)
+
 
 
 @login_required
 def dashboard_view(request):
     user = request.user
+    no_unseen_messages = Message.objects.filter(
+        receiver=request.user, is_read=False
+    ).count()
+    no_pending_exchanges = Exchange.objects.filter(
+        Q(user2=request.user, status="pending")
+        | Q(user2=request.user, user1_completed=True)
+    ).count()
 
     pending_requests = Exchange.objects.filter(
         user2=user, status="pending"
     ).select_related("user1", "user1__userprofile", "skill1", "skill2")
 
-    # Calculate profile completion
     profile_completion = 0
     if hasattr(user, "userprofile"):
         profile = user.userprofile
@@ -448,6 +561,8 @@ def dashboard_view(request):
         "profile_completion": profile_completion,
         "recent_activities": recent_activities,
         "matches": matches,
+        "unseen_messages": no_unseen_messages,
+        "pending_exchanges": no_pending_exchanges,
     }
 
     return render(request, "dashboard.html", context)
@@ -457,6 +572,9 @@ def dashboard_view(request):
 def exchanges_view(request):
     """Display all exchanges for the current user."""
     user = request.user
+    no_unseen_messages = Message.objects.filter(
+        receiver=request.user, is_read=False
+    ).count()
 
     all_exchanges = (
         Exchange.objects.filter(Q(user1=user) | Q(user2=user))
@@ -486,9 +604,13 @@ def exchanges_view(request):
 
         is_initiator = exchange.user1 == user
 
-        my_completed = exchange.user1_completed if is_initiator else exchange.user2_completed
-        their_completed = exchange.user2_completed if is_initiator else exchange.user1_completed
-        
+        my_completed = (
+            exchange.user1_completed if is_initiator else exchange.user2_completed
+        )
+        their_completed = (
+            exchange.user2_completed if is_initiator else exchange.user1_completed
+        )
+
         exchange_data = {
             "id": exchange.id,
             "other_user": other_user,
@@ -521,6 +643,7 @@ def exchanges_view(request):
         "completed_exchanges": completed_exchanges,
         "other_exchanges": other_exchanges,
         "total_count": all_exchanges.count(),
+        "unseen_messages": no_unseen_messages,
     }
 
     return render(request, "exchanges.html", context)
@@ -599,8 +722,12 @@ def propose_exchange_view(request, user_skill_id):
         messages.error(request, "You cannot propose an exchange with yourself!")
         return redirect("marketplace")
 
+    other_user_seek_skills = UserSkill.objects.filter(
+        user=other_user_skill.user, role="seek"
+    ).values_list("skill_id", flat=True)
+
     my_offered_skills = UserSkill.objects.filter(
-        user=request.user, role="offer"
+        user=request.user, role="offer", skill_id__in=other_user_seek_skills
     ).select_related("skill")
 
     if request.method == "POST":
@@ -679,25 +806,22 @@ def reject_exchange(request, exchange_id):
 def mark_exchange_complete(request, exchange_id):
     """Mark the user's part of an exchange as complete (POST only with CSRF)."""
     user = request.user
-    
+
     exchange = get_object_or_404(
-        Exchange,
-        Q(user1=user) | Q(user2=user),
-        id=exchange_id,
-        status="active"
+        Exchange, Q(user1=user) | Q(user2=user), id=exchange_id, status="active"
     )
-    
+
     is_user1 = user == exchange.user1
-    
+
     if is_user1 and not exchange.user1_completed:
         exchange.user1_completed = True
         exchange.user1_completed_date = timezone.now()
         exchange.save()
         messages.success(
-            request, 
+            request,
             "Your part of the exchange is marked as complete! "
             "Once the other user also marks their part complete, "
-            "an admin will review and approve it."
+            "an admin will review and approve it.",
         )
     elif not is_user1 and not exchange.user2_completed:
         exchange.user2_completed = True
@@ -707,28 +831,29 @@ def mark_exchange_complete(request, exchange_id):
             request,
             "Your part of the exchange is marked as complete! "
             "Once the other user also marks their part complete, "
-            "an admin will review and approve it."
+            "an admin will review and approve it.",
         )
     else:
         messages.info(request, "You've already marked this exchange as complete.")
-    
+
     if exchange.both_users_completed() and not exchange.admin_approved:
         messages.info(
             request,
             "Both users have completed their parts! "
-            "Waiting for admin approval to finalize this exchange."
+            "Waiting for admin approval to finalize this exchange.",
         )
-    
+
     return redirect("exchanges")
 
 
 @login_required
 def messages_view(request, user_id=None):
-    """Display list of conversations and optionally a selected conversation."""
-    current_user = request.user
 
-    # --- Build conversation list with optimized queries ---
-    # Get all users the current user has messaged with
+    current_user = request.user
+    no_pending_exchanges = Exchange.objects.filter(
+        user2=request.user, status="pending"
+    ).count()
+
     sent_to_ids = (
         Message.objects.filter(sender=current_user)
         .values_list("receiver_id", flat=True)
@@ -741,26 +866,22 @@ def messages_view(request, user_id=None):
     )
     conversation_user_ids = set(list(sent_to_ids) + list(received_from_ids))
 
-    # Fetch all conversation users with profiles in one query
     conversation_users = User.objects.filter(
         id__in=conversation_user_ids
     ).select_related("userprofile")
     user_map = {user.id: user for user in conversation_users}
 
-    # Fetch all relevant messages for conversations in bulk
     all_messages = Message.objects.filter(
         Q(sender=current_user, receiver_id__in=conversation_user_ids)
         | Q(sender_id__in=conversation_user_ids, receiver=current_user)
     ).select_related("sender", "receiver")
 
-    # Build conversation data
     conversations = []
     for uid in conversation_user_ids:
         other_user = user_map.get(uid)
         if not other_user:
             continue
 
-        # Find last message for this conversation
         user_messages = [
             m
             for m in all_messages
@@ -769,7 +890,6 @@ def messages_view(request, user_id=None):
         ]
         last_message = max(user_messages, key=lambda m: m.timestamp, default=None)
 
-        # Count unread messages
         unread_count = sum(
             1
             for m in user_messages
@@ -784,7 +904,6 @@ def messages_view(request, user_id=None):
             }
         )
 
-    # Sort conversations by last message timestamp
     conversations.sort(
         key=lambda x: (
             x["last_message"].timestamp if x["last_message"] else x["user"].date_joined
@@ -792,7 +911,6 @@ def messages_view(request, user_id=None):
         reverse=True,
     )
 
-    # --- Selected conversation (if any) ---
     selected_user = None
     messages_list = []
     if user_id:
@@ -800,12 +918,10 @@ def messages_view(request, user_id=None):
             User.objects.select_related("userprofile"), id=user_id
         )
 
-        # Mark unread messages as read
         Message.objects.filter(
             sender=selected_user, receiver=current_user, is_read=False
         ).update(is_read=True)
 
-        # Get all messages with this user
         messages_list = (
             Message.objects.filter(
                 Q(sender=current_user, receiver=selected_user)
@@ -815,7 +931,6 @@ def messages_view(request, user_id=None):
             .select_related("sender", "receiver")
         )
 
-        # Handle sending a new message
         if request.method == "POST":
             content = request.POST.get("content", "").strip()
             if content:
@@ -828,6 +943,7 @@ def messages_view(request, user_id=None):
         "conversations": conversations,
         "selected_user": selected_user,
         "messages": messages_list,
+        "pending_exchanges": no_pending_exchanges,
     }
 
     return render(request, "messages.html", context)

@@ -3,10 +3,23 @@
 
 {% block title %}My Exchanges | SkillSwap{% endblock title %}
 
+{% block styles %}
+<style>
+    @media (max-width: 768px){
+        .exchange_heading{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock styles %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="row mb-4">
-        <div class="col-md-8">
+        <div class="col-md-8 exchange_heading">
             <h1><i class="fas fa-exchange-alt me-2 text-primary"></i> My Exchanges</h1>
             <p class="text-muted">Manage all your skill exchange activities</p>
         </div>
@@ -134,12 +147,12 @@
                                 <h5 class="mb-1">Exchange with <strong>{{ exchange.other_user_name }}</strong></h5>
                                 <div class="exchange-details mt-2">
                                     <p class="mb-1">
-                                        <i class="fas fa-graduation-cap text-success me-2"></i>
+                                        <i class="bi bi-arrow-right text-success me-2"></i>
                                         <strong>You're offering:</strong>
                                         <span class="badge bg-success ms-1">{{ exchange.my_skill.name }}</span>
                                     </p>
                                     <p class="mb-1">
-                                        <i class="fas fa-book-reader text-primary me-2"></i>
+                                        <i class="bi bi-arrow-left text-primary me-2"></i>
                                         <strong>You're seeking:</strong>
                                         <span class="badge bg-primary ms-1">{{ exchange.their_skill.name }}</span>
                                     </p>

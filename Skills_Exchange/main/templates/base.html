@@ -8,13 +8,15 @@
     {% block styles %} {% endblock styles %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
         .dropdown-toggle::after {
   display: none !important;
-  .developerTeam:hover{
-    color: blue;
-  }
+}
+.devlink:hover {
+  color: #4361EE !important;
 }
     </style>
 </head>
@@ -52,18 +54,29 @@
           {% endif %}
           {% if user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link {% if request.resolver_match.url_name == 'exchanges' %}active{% endif %}" href="{% url 'exchanges' %}">My Exchanges</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'exchanges' %}active{% endif %}" href="{% url 'exchanges' %}">My Exchanges
+              {% if pending_exchanges > 0 %}
+              <span class="badge bg-danger rounded-circle">
+                {{ pending_exchanges }}
+              </span>
+              {% endif %}
+            </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if request.resolver_match.url_name == 'messages' or request.resolver_match.url_name == 'conversation' %}active{% endif %}" href="{% url 'messages' %}">
               Messages
+              {% if unseen_messages > 0 %}
+              <span class="badge bg-danger rounded-circle">
+                {{ unseen_messages }}
+              </span>
+            {% endif %}
             </a>
           </li>
           {% endif %}
         </ul>
 
         <!-- Right user/auth area -->
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center justify-content-center">
           {% if user.is_authenticated %}
             <div class="dropdown">
               <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -139,7 +152,7 @@
             </div>
 
             <div class="copyright text-center">
-                <p>&copy; 2025 SkillSwap. All rights reserved | <a class="secondary-link link-underline-opacity-0 developerTeam" style="color: #4cc9f0; !important" href="{% url "devteam" %}">Developers Team</a></p>
+                <p>&copy; 2025 SkillSwap. All rights reserved | <a class="devlink" style="color: skyblue;" href="{% url "devteam" %}">Developers team</a></p>
             </div>
         </div>
     </footer>

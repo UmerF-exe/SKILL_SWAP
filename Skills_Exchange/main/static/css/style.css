@@ -1020,7 +1020,6 @@ header {
 
 .message.sent {
     align-self: flex-end;
-    background: var(--primary);
     color: white;
     border-bottom-right-radius: 4px;
 }

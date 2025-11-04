@@ -19,6 +19,9 @@
         .dropdown-toggle::after {
             display: none !important;
         }
+        .devlink:hover {
+  color: #4361EE !important;
+}
     </style>
 </head>
 
@@ -67,7 +70,7 @@
                     </ul>
 
                     <!-- Right Side Auth / Profile -->
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center justify-content-center">
                         {% if user.is_authenticated %}
                             {% if user.is_staff %}
                             <div class="dropdown">
@@ -146,7 +149,7 @@
                 </div>
 
                 <div class="col-lg-6">
-                    <img src="{% static 'home.png'%}" style="width: 600px;border-radius:10px"></img>
+                    <img src="{% static 'home.png'%}" style="width: 100%;border-radius:10px"></img>
                 </div>
             </div>
     </section>
@@ -290,8 +293,7 @@
             </div>
 
             <div class="copyright text-center">
-                <p>&copy; 2025 SkillSwap. All rights reserved | <a class="secondary-link link-underline-opacity-0" style="color: #4cc9f0; !important"
-                        href="{% url "devteam" %}">Developers Team</a></p>
+                <p>&copy; 2025 SkillSwap. All rights reserved | <a class="devlink" style="color: skyblue;" href="{% url "devteam" %}">Developers team</a></p>
             </div>
         </div>
     </footer>

@@ -50,6 +50,12 @@
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
+@media (max-width: 768px){
+  .skillNum{
+    margin-top: 20px;
+  }
+}
+
 </style>
 {% endblock %}
 
@@ -109,7 +115,7 @@
         <!-- Skills -->
         <div class="col-md-9">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>{{ skills|length }} Skills Available</h2>
+                <h2 class="skillNum">{{ skills|length }} Skills Available</h2>
             </div>
 
             <div class="skills-grid">

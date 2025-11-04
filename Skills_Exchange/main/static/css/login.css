@@ -205,14 +205,21 @@ h2 {
     font-size: 14px;
 }
 
+/* Eye icon - now controlled by JavaScript and CSS based on content */
 .input-group .toggle-password {
     position: absolute;
     top: 50%;
     right: 10px;
     transform: translateY(-50%);
     cursor: pointer;
-    display: none;
+    display: none; /* Hidden by default */
     color: #666;
+    z-index: 10;
+}
+
+/* Show eye icon when password field has content */
+.input-group input:not(:placeholder-shown) + .toggle-password {
+    display: block;
 }
 
 #signin, #signup, #resetBtn, #googleBtn {
@@ -341,9 +348,26 @@ footer {
     font-size: 14px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* Responsive Design - Fixed Navigation */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        margin-top: 15px;
+    }
     .nav-links {
-        display: none;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .nav-links li {
+        margin-left: 0 !important;
+    }
+    .auth-buttons {
+        margin-top: 15px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        margin: 20px;
     }
 }

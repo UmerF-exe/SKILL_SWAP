@@ -166,8 +166,8 @@
                 {% else %}
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    You need to add skills you can offer before proposing an exchange.
-                    <a href="{% url 'manage_skills' %}" class="alert-link">Add skills now</a>
+                    You do not have any skills you can offer to {{ other_user_skill.user.userprofile.full_name }}.
+                    <a href="{% url 'manage_skills' %}" class="alert-link">Add skills</a>
                 </div>
                 <div class="text-center mt-3">
                     <a href="{% url 'marketplace' %}" class="btn btn-outline-secondary">Back to Marketplace</a>

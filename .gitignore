@@ -85,3 +85,4 @@ Skills_Exchange/Skills_Exchange/__pycache__/settings.cpython-312.pyc
 Skills_Exchange/Skills_Exchange/__pycache__/urls.cpython-312.pyc
 Skills_Exchange/Skills_Exchange/__pycache__/wsgi.cpython-312.pyc
 .local/state/replit/agent/filesystem/filesystem_state.json
+Skills_Exchange/db.sqlite3
