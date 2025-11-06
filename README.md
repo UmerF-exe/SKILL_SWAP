@@ -50,64 +50,67 @@ It is responsive, secure, and built entirely using open-source technologies.
 Follow these steps to set up the project on your local machine:
 
 ### **1️⃣ Clone the Repository**
-```bash
 git clone https://github.com/your-username/Skills_Exchange.git
 cd Skills_Exchange
+
 2️⃣ Create and Activate Virtual Environment
-bash
-Copy code
 python -m venv venv
 venv\Scripts\activate     # On Windows
 # source venv/bin/activate  # On Linux/Mac
-3️⃣ Install Dependencies
-bash
-Copy code
-pip install -r requirements.txt
-(If requirements.txt doesn’t exist, run: pip install django django-widget-tweaks)
 
+3️⃣ Install Dependencies
+pip install -r requirements.txt
+
+(If requirements.txt doesn’t exist, run: pip install django django-widget-tweaks)
 4️⃣ Apply Migrations
-bash
-Copy code
 python manage.py makemigrations
 python manage.py migrate
-5️⃣ Create Superuser (Admin)
-bash
-Copy code
-python manage.py createsuperuser
-6️⃣ Run the Server
-bash
-Copy code
-python manage.py runserver
-Open the browser and go to:
 
-cpp
-Copy code
+5️⃣ Create Superuser (Admin)
+python manage.py createsuperuser
+
+6️⃣ Run the Server
+python manage.py runserver
+
+Open the browser and go to:
 http://127.0.0.1:8000/
+
+
 🧑‍💻 Usage Guide
 User Actions
+
+
 Register/Login → Access the system
+
 
 Add Skills → List skills and experience
 
+
 View Skills → Browse others’ skills
+
 
 Send Requests → Connect for collaboration
 
+
 Manage Requests → Accept or reject offers
+
 
 Give Feedback → Rate the collaboration
 
-Admin Actions
-Access the admin panel at:
 
-arduino
-Copy code
+Admin Actions
+
+
+Access the admin panel at:
 http://127.0.0.1:8000/admin
+
+
+
 Manage users, skills, and requests.
 
+
+
 🗄️ Project Structure
-php
-Copy code
 Skills_Exchange/
 │
 ├── skills_exchange/          # Main Django project settings
@@ -123,19 +126,26 @@ Skills_Exchange/
 ├── db.sqlite3                # SQLite database
 ├── manage.py                 # Django management script
 └── README.md                 # Project documentation
+
+
 🔐 Security Features
+
+
 Django’s built-in User Authentication System
+
 
 Password Hashing for all credentials
 
+
 CSRF Protection on all forms
+
 
 Session Management for authorized access
 
+
+
 🧠 Example Code Snippets
 Model Example (models.py)
-python
-Copy code
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -155,23 +165,29 @@ class Request(models.Model):
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_requests')
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, default='Pending')
+
+
 🧩 Troubleshooting
-Issue	Possible Cause	Solution
-ModuleNotFoundError: No module named 'widget_tweaks'	Missing dependency	Run pip install django-widget-tweaks
-TemplateDoesNotExist	Wrong template path	Ensure correct template directory in settings.py
-Database errors	Migration not applied	Run python manage.py makemigrations && python manage.py migrate
-Static files missing	Missing static configuration	Run python manage.py collectstatic
+IssuePossible CauseSolutionModuleNotFoundError: No module named 'widget_tweaks'Missing dependencyRun pip install django-widget-tweaksTemplateDoesNotExistWrong template pathEnsure correct template directory in settings.pyDatabase errorsMigration not appliedRun python manage.py makemigrations && python manage.py migrateStatic files missingMissing static configurationRun python manage.py collectstatic
 
 🔄 Future Enhancements
+
+
 Add real-time chat using Django Channels
+
 
 Implement AI-based skill matching
 
+
 Add notifications system for new requests
+
 
 Develop mobile app version (Flutter/React Native)
 
+
 Enable payment system for premium collaborations
+
+
 
 📚 License
 This project is open-source and available under the MIT License.
@@ -189,4 +205,13 @@ Special thanks to Engr. Zaib-ul-Nisa, Course Instructor for Web Engineering (CS-
 for providing continuous guidance and support during the project development.
 
 🏁 In Summary:
+
 “Skills Exchange Platform” is a Django-powered web application built to promote collaboration and learning among individuals through secure, scalable, and user-friendly design.
+
+
+
+✅ **How to Use This File:**
+- Save this text as `README.md` in your project’s root folder.
+- It will automatically render formatted when viewed on GitHub or VS Code.
+
+Would you like me to include a **`requirements.txt` file** (listing all Python libraries to install) along with this README? It’s usually kept in the same directory for easier setup.
