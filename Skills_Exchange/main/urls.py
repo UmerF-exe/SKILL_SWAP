@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-
 urlpatterns = [
     path('', views.index_view, name='index'),
     path('index/', views.index_view, name='index_alt'),
@@ -28,3 +27,4 @@ urlpatterns = [
     path("messages/<int:user_id>/", views.messages_view, name="conversation"),
     path("devteam/", views.devteam_view, name="devteam"),
 ]
+

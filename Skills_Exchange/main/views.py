@@ -782,7 +782,8 @@ def accept_exchange(request, exchange_id):
 
     messages.success(
         request,
-        f"Exchange accepted! You can now start learning {exchange.skill1.name} from {exchange.user1.userprofile.full_name if hasattr(exchange.user1, 'userprofile') and exchange.user1.userprofile.full_name else exchange.user1.username}.",
+        f"Exchange accepted! You can now start learning {exchange.skill1.name} from {exchange.user1.userprofile.full_name 
+        if hasattr(exchange.user1, 'userprofile') and exchange.user1.userprofile.full_name else exchange.user1.username}.",
     )
     return redirect("dashboard")
 
