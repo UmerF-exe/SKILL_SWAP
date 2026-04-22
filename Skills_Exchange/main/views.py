@@ -103,7 +103,8 @@ def logout_view(request):
 
 
 def index_view(request):
-    return render(request, "index.html")
+    # return render(request, "index.html")
+    return HttpResponse("WORKING 🚀")
 
 
 @login_required
