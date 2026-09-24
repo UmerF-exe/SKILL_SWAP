@@ -1,0 +1,11 @@
+.All{
+    display: flex;
+    justify-content:flex-start;
+    border: solid red 5px;
+    margin-right: 50%;
+}
+.Home{
+    border: solid greenyellow 5px;
+    margin: 10px;
+    background: rgb(117, 74, 17);
+}

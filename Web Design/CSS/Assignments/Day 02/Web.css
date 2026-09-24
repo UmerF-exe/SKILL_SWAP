@@ -1,0 +1,153 @@
+.content{
+    display: inline-block;
+    }
+    .track{
+        border-left: 2px solid black;
+        border-right: 2px solid black;
+        padding: 0px 30px 0px 30px;
+    }
+    .gift{
+        padding: 0px 30px 0px 30px;
+    }
+    .contact{
+        padding: 0px 30px 0px 30px;
+    }
+.poster{
+    border:1px solid black;
+    background-image: url(Image.png);
+    height: 500px;
+    background-size: cover;
+}
+.All{
+    margin-top: 100px;
+    margin-left: 100px;
+}
+.men{
+    font-size: 30px;
+    color: white;
+}
+.show{
+    font-size: 50px;
+    color: rgb(47, 255, 61);
+}
+.personal{
+    font-weight: bolder;
+    font-size: 50px;
+    color: white;
+}
+.style{
+    font-size: 50px;
+    color: rgb(47, 255, 92);
+}
+p{
+    color: white;
+}
+.view{
+    font-size: 20px;
+    padding: 10px;
+    margin: 20px;
+    border-radius: 10px;
+    color: white;
+    background-color:rgb(47, 255, 109);
+}
+.both{
+    margin: 20px 100px 10px 100px;
+    display: flex;
+    justify-content: space-between;
+}
+.image1{
+    justify-content: center;
+    border: 2px solid black;
+    margin: 20px;
+    padding: 0px 100px 0px 100px;
+}
+.open{
+    color: black;
+}
+.image2{
+    justify-content: center;
+    border: 2px solid black ;
+    margin: 20px;
+    padding: 0px 100px 0px 100px;
+}
+.image3{
+    display: flex;
+}
+.sneaker{
+    margin-top: 20px;
+    padding-left: 20px;
+    border: 2px solid black;
+}
+.purse{
+    margin-top: 20px;
+    padding-left: 20px;
+    border: 2px solid black;
+}
+.smart{
+    margin: 20px 500px 10px 100px;
+    padding-left: 20px;
+    border: 2px solid black;
+}
+.collection{
+    background-color: bisque;
+    margin-top: 20px;
+    border: 2px solid red;
+    padding-top: 20px;
+}
+.off{
+    font-size: 50px;
+}
+.discover{
+    color: black;
+    background-color: greenyellow;
+}
+.shirt{
+    border: 2px solid black;
+    margin-top: 30px;
+    padding-bottom: 20px;
+}
+.blog{
+    display: flex;
+    justify-content: space-between 20px;
+    justify-content: space-around;
+}
+.blog1{
+    margin: 20px 20px 20px 20px;
+}
+.blog2{
+    margin: 20px 20px 20px 20px;
+}
+.blog3{
+    margin-right: 684px;
+    margin-left: 60px;
+}
+.footer{
+    background-color: black;
+}
+.link{
+    display: flex;
+    color: white;
+    margin: 0px 50px 0px 50px;
+    padding: 30px;
+    
+}
+.Link1{
+    margin-left: 10px;
+}
+
+.Link2{
+    margin-left: 480px;
+}
+.Link3{
+    margin-left: 10px;
+}
+.Link4{
+    margin-left: 500px;
+}
+.news{
+    margin-left: 90px;
+}
+.contact{
+    display: flex;
+    margin-left: 60px;
+}

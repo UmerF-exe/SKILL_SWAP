@@ -1,0 +1,33 @@
+
+.Both{
+    display: flex;
+    justify-content: center;
+}
+
+.container{
+    border: solid red 5px;
+    }
+.images{
+    border: solid red 5px;
+    margin-left: 20px;
+}
+.download{
+    border: solid red 5px;
+    margin-left: 20px;
+}
+.Three{
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+.Image1{
+    border: solid red 5px;
+}
+.Image2{
+    border: solid red 5px;
+    margin-left: 20px;
+}
+.Image3{
+    border: solid red 5px;
+    margin-left: 20px;
+}

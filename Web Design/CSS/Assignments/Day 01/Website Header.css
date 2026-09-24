@@ -1,0 +1,9 @@
+.All{
+    display: flex;
+    justify-content: center;
+}
+.Home{
+    border: double red 5px;
+    background-color: gray;
+    margin: 50px;
+}
